@@ -23,7 +23,7 @@
                 width: 100%;
             }
             #container {
-                width: 40%;
+                width: 30%;
                 margin: 0px auto 0px auto;
             }
             #formtable {
@@ -38,15 +38,23 @@
                 color: white;
                 font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
                 width: 250px;
+                border-radius: 0.5em;
             }
             #go {
                 background-color: chartreuse;
                 color: black;
                 font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
                 font-weight: bold;
-                width: 100%;
+                width: 300px;
                 display: block;
                 font-size: 24px;
+                border-radius: 0.5em;
+            }
+            td {
+                padding: 5px 0px 5px 0px;
+            }
+            .label {
+                width: 30px;
             }
         </style>
         <script type="application/javascript">
@@ -432,21 +440,20 @@
                         }
                     }
                 });
-
             }
         </script>
     </head>
     <body>
         <div id="directions">
-            <div style="height: 200px;"></div>
             <div id="container">
+                <div style="height: 200px;"></div>
                 <table id="formtable">
                     <tr>
-                        <td><lablel for="start">Start: </lablel></td>
+                        <td class="label"><lablel for="start">Start: </lablel></td>
                         <td><input type="text" id="start" name="start"></td>
                     </tr>
                     <tr>
-                        <td><lablel for="end">End: </lablel></td>
+                        <td class="label"><lablel for="end">End: </lablel></td>
                         <td><input type="text" id="end" name="end"></td>
                     </tr>
                 </table>
@@ -454,7 +461,6 @@
             </div>
         </div>
         <div id="map"></div>
-        <!-- <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCZpstuo1hvbPo6FKFTUr1r0dZbec8vW-g&callback=initMap&v=weekly" async="async"></script> -->
         <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCZpstuo1hvbPo6FKFTUr1r0dZbec8vW-g&v=weekly" async="async"></script>
     </body>
 </html>
