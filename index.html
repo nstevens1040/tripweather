@@ -48,6 +48,24 @@
         <script src="https://code.jquery.com/jquery-3.6.0.js" integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk=" crossorigin="anonymous"></script>
         <script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
         <style type="text/css">
+            th, td {
+                white-space: nowrap;
+                text-align: center;
+            }
+
+            th {
+                color: chartreuse;
+            }
+
+
+            .hourly {
+                border-collapse: collapse;
+                border: 1px solid grey;
+                padding: 5px;
+                color: white;
+                font-weight: normal;
+                background-color: black;
+            }
             #map {
                 display: none;
                 height: 100%;
@@ -279,6 +297,11 @@
             var svg_response;
             var marker;
             var _time_;
+            function createInfoTable(oneReport,timestring){
+
+
+
+            }
             function getWeatherReport(path,timestamp){
                 var coords = path.lat() + "%2C" + path.lng();
                 var settings = {
@@ -341,17 +364,30 @@
                     //     svg_response = resvg;
                     // });
                     // var _icon = {url:'https://nanick.org/weathericons/' + oneReport.iconCode + ".png"}
-                    var image = 'https://developers.google.com/maps/documentation/javascript/examples/full/images/beachflag.png';
-                    const markerIcon = {
-                        url: 'https://nanick.org/weathericons/_' + oneReport.iconCode + ".png",
-                        size: new google.maps.Size(43,43)
+                    var info_table = "<table class=\"hourlytable\">\n    <tbody>\n        <tr>\n            <th class=\"hourly\" style=\"color: chartreuse;\">" + timestring + "</th>\n        </tr>\n        <tr>\n            <th class=\"hourly\">\n                <img height=\"100\" width=\"100\" src=\"https://www.wunderground.com/static/i/c/v4/" + oneReport.iconCode + ".svg\">\n            </th>\n        </tr>\n        <tr>\n            <td class=\"hourly\">" + oneReport.temperature + "&deg;F</td>\n        </tr>\n        <tr>\n            <td class=\"hourly\">" + oneReport.precipChance + "% chance of rain</td>\n        </tr>\n        <tr>\n            <td class=\"hourly\">" + oneReport.windSpeed + " mph " + oneReport.windDirectionCardinal + "</td>\n        </tr>\n        <tr>\n            <td class=\"hourly\">" + oneReport.pressureMeanSeaLevel + " inches Hg</td>\n        </tr>\n    </tbody>\n</table>";
+                    const image = {
+                        url: 'https://raw.githubusercontent.com/nstevens1040/tripweather/main/icons/_' + oneReport.iconCode + ".png",
+                        // This marker is 20 pixels wide by 32 pixels high.
+                        size: new google.maps.Size(75, 75),
+                        // The origin for this image is (0, 0).
+                        origin: new google.maps.Point(0,0),
+                        // The anchor for this image is the base of the flagpole at (0, 32).
+                        anchor: new google.maps.Point(0, 0)
                     };
-                    marker = new google.maps.Marker({
+                    var marker_ = new google.maps.Marker({
                         position: { lat: path.lat(), lng: path.lng() },
                         map,
                         title: timestring + " " + oneReport.temperature.toString() + "°F and " + oneReport.wxPhraseLong,
                         label: oneReport.temperature.toString() + "°F",
-                        icon: 'https://nanick.org/weathericons/_' + oneReport.iconCode + ".png"
+                        icon: image
+                    });
+                    const infowindow = new google.maps.InfoWindow({content: info_table,});
+                    marker_.addListener("click", () => {
+                        infowindow.open({
+                            anchor: marker_,
+                            map,
+                            shouldFocus: false,
+                        });
                     });
                     // new google.maps.Marker({
                     //     position: { lat: path.lat(), lng: path.lng() },
