@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Weather Map</title>
+        <script src="https://code.jquery.com/jquery-3.6.0.js" integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk=" crossorigin="anonymous"></script>
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
+        <style type="text/css">
+            #map {
+                display: none;
+                height: 100%;
+            }
+            html,
+            body {
+                height: 100%;
+                margin: 0;
+                padding: 0;
+                background-color: black;
+                color: white;
+                font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            }
+            #directions {
+                font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+                width: 100%;
+            }
+            #container {
+                width: 40%;
+                margin: 0px auto 0px auto;
+            }
+            #formtable {
+                width: 100%;
+            }
+            label {
+                color: chartreuse;
+                font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            }
+            input {
+                background-color: rgb(0, 0, 78);
+                color: white;
+                font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+                width: 250px;
+            }
+            #go {
+                background-color: chartreuse;
+                color: black;
+                font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+                font-weight: bold;
+                width: 100%;
+                display: block;
+                font-size: 24px;
+            }
+        </style>
+        <script type="application/javascript">
+            var src_coords_obj = {lat: "",lng: ""};
+            var dest_coords_obj = {lat: "",lng: ""};
+            var coords_obj = {lat: "",lng: ""};
+            var geo_re;
+            document.addEventListener("DOMContentLoaded", ()=>{
+                document.getElementById("end").addEventListener("keyup", dest_address);
+                document.getElementById("start").addEventListener("keyup", src_address);
+                navigator.geolocation.getCurrentPosition(nav_callback);
+            });
+            function nav_callback(p) {
+                coords_obj.lat = p.coords.latitude;
+                coords_obj.lng = p.coords.longitude;
+                setTimeout(function() {
+                    var geocoder = new google.maps.Geocoder();
+                    geocoder.geocode({
+                        location: coords_obj
+                    }).then(init_callback);
+                }, 250);
+            }
+            function init_callback(response) {
+                geo_re = response;
+                if (response.results[0]) {
+                    setTimeout(()=>{
+                        var adr = response.results[0].address_components;
+                        var s, street_number, ro, street_name;
+                        var city = adr.filter((a)=>{
+                            return (a.types.indexOf("locality") != -1);
+                        })[0].short_name;
+                        var state = adr.filter((a)=>{
+                            return (a.types.indexOf("administrative_area_level_1") != -1);
+                        })[0].short_name;
+                        var zip_code = adr.filter((a)=>{
+                            return (a.types.indexOf("postal_code") != -1);
+                        })[0].short_name;
+                        sn = adr.filter((a)=>{
+                            return (a.types.indexOf("street_number") != -1);
+                        })[0];
+                        ro = adr.filter((a)=>{
+                            return (a.types.indexOf("route") != -1);
+                        })[0];
+                        if (!sn) {
+                            s = adr.filter((a)=>{
+                                return (a.types.indexOf("transit_station") != -1);
+                            })[0]
+                            street_number = s.short_name;
+                        } else {
+                            street_number = sn.short_name;
+                        }
+                        if (ro) {
+                            street_name = ro.short_name;
+                            loc_address = street_number + " " + street_name + ", " + city + ", " + state + " " + zip_code;
+                        } else {
+                            loc_address = street_number + ", " + city + ", " + state + " " + zip_code;
+                        }
+                        document.getElementById("start").value= loc_address;
+                        src_coords_obj.lat = response.results[0].geometry.location.lat();
+                        src_coords_obj.lng = response.results[0].geometry.location.lng();
+                        console.log(JSON.stringify({
+                            geocoding: loc_address
+                        }));
+                        console.log(JSON.stringify(src_coords_obj));
+                    }, 250);
+                }
+            }
+            function start_callback(response) {
+                geo_re = response;
+                if (response.results[0]) {
+                    setTimeout(()=>{
+                        var adr = response.results[0].address_components;
+                        var s, street_number, ro, street_name;
+                        var city = adr.filter((a)=>{
+                            return (a.types.indexOf("locality") != -1);
+                        })[0].short_name;
+                        var state = adr.filter((a)=>{
+                            return (a.types.indexOf("administrative_area_level_1") != -1);
+                        })[0].short_name;
+                        var zip_code = adr.filter((a)=>{
+                            return (a.types.indexOf("postal_code") != -1);
+                        })[0].short_name;
+                        sn = adr.filter((a)=>{
+                            return (a.types.indexOf("street_number") != -1);
+                        })[0];
+                        ro = adr.filter((a)=>{
+                            return (a.types.indexOf("route") != -1);
+                        })[0];
+                        if (!sn) {
+                            s = adr.filter((a)=>{
+                                return (a.types.indexOf("transit_station") != -1);
+                            })[0]
+                            street_number = s.short_name;
+                        } else {
+                            street_number = sn.short_name;
+                        }
+                        if (ro) {
+                            street_name = ro.short_name;
+                            loc_address = street_number + " " + street_name + ", " + city + ", " + state + " " + zip_code;
+                        } else {
+                            loc_address = street_number + ", " + city + ", " + state + " " + zip_code;
+                        }
+                        document.getElementById("start").value= loc_address;
+                        src_coords_obj.lat = response.results[0].geometry.location.lat();
+                        src_coords_obj.lng = response.results[0].geometry.location.lng();
+                        console.log(JSON.stringify({
+                            geocoding: loc_address
+                        }));
+                        console.log(JSON.stringify(src_coords_obj));
+                    }, 250);
+                }
+            }
+            function end_callback(response) {
+                geo_re = response;
+                if (response.results[0]) {
+                    setTimeout(()=>{
+                        var adr = response.results[0].address_components;
+                        var s, street_number, ro, street_name;
+                        var city = adr.filter((a)=>{
+                            return (a.types.indexOf("locality") != -1);
+                        })[0].short_name;
+                        var state = adr.filter((a)=>{
+                            return (a.types.indexOf("administrative_area_level_1") != -1);
+                        })[0].short_name;
+                        var zip_code = adr.filter((a)=>{
+                            return (a.types.indexOf("postal_code") != -1);
+                        })[0].short_name;
+                        sn = adr.filter((a)=>{
+                            return (a.types.indexOf("street_number") != -1);
+                        })[0];
+                        ro = adr.filter((a)=>{
+                            return (a.types.indexOf("route") != -1);
+                        })[0];
+                        if (!sn) {
+                            s = adr.filter((a)=>{
+                                return (a.types.indexOf("transit_station") != -1);
+                            })[0]
+                            street_number = s.short_name;
+                        } else {
+                            street_number = sn.short_name;
+                        }
+                        if (ro) {
+                            street_name = ro.short_name;
+                            loc_address = street_number + " " + street_name + ", " + city + ", " + state + " " + zip_code;
+                        } else {
+                            loc_address = street_number + ", " + city + ", " + state + " " + zip_code;
+                        }
+                        document.getElementById("end").value= loc_address;
+                        dest_coords_obj.lat = response.results[0].geometry.location.lat();
+                        dest_coords_obj.lng = response.results[0].geometry.location.lng();
+                        console.log(JSON.stringify({
+                            geocoding: loc_address
+                        }));
+                        console.log(JSON.stringify(dest_coords_obj));
+                    }, 250);
+                }
+            }
+            function dest_address(event) {
+                if (event.keyCode == 13) {
+                    var maddress = document.getElementById("end").value;
+                    var geocoder = new google.maps.Geocoder();
+                    geocoder.geocode({
+                        address: maddress
+                    }).then(end_callback);
+                }
+            }
+            function src_address(event) {
+                if (event.keyCode == 13) {
+                    var maddress = document.getElementById("start").value;
+                    var geocoder = new google.maps.Geocoder();
+                    geocoder.geocode({
+                        address: maddress
+                    }).then(start_callback);
+                }
+            }
+            var directionsResponse,weatherResponse,duration,qty_weather_reports,iter,triptime,steps,start_time;
+            var fifteen_minutes = 900;
+            let map;
+            var svg_response;
+            var marker;
+            var _time_;
+            function getWeatherReport(path,timestamp){
+                var coords = path.lat() + "%2C" + path.lng();
+                var settings = {
+                    "url": "https://api.weather.com/v3/wx/forecast/fifteenminute?geocode=" + coords + "&units=e&language=en-US&format=json&apiKey=e1f10a1e78da46f5b10a1e78da96f525",
+                    "method": "GET",
+                    "timeout": 0
+                };
+                $.ajax(settings).done(function (response) {
+                    if (!response){
+                        return;
+                    }
+                    var hours,minutes;
+                    var pm = false;
+                    weatherResponse = response;
+                    var closest = response.validTimeLocal.filter(function(a){
+                        return ((new Date(a).getTime() - timestamp) <= 899000 & (new Date(a).getTime() - timestamp) > -499000);
+                    })[0];
+                    if(new Date(timestamp).getHours() > 12){
+                        hours = new Date(timestamp).getHours() - 12;
+                        pm = true;
+                    } else {
+                        hours = new Date(timestamp).getHours();
+                    }
+                    minutes = new Date(timestamp).getMinutes();
+                    if(minutes.toString().length == 1){ minutes = "0" + minutes.toString() }
+                    if(pm){
+                        var timestring = hours + ":" + minutes + " PM";
+                    } else {
+                        var timestring = hours + ":" + minutes + " AM";
+                    }
+                    var index_ = response.validTimeLocal.indexOf(closest);
+                    var oneReport = {};
+                    oneReport["dayOfWeek"] = response.dayOfWeek[index_];
+                    oneReport["iconCode"] = response.iconCode[index_];
+                    oneReport["iconCodeExtend"] = response.iconCodeExtend[index_];
+                    oneReport["precipChance"] = response.precipChance[index_];
+                    oneReport["precipRate"] = response.precipRate[index_];
+                    oneReport["precipType"] = response.precipType[index_];
+                    oneReport["relativeHumidity"] = response.relativeHumidity[index_];
+                    oneReport["snowRate"] = response.snowRate[index_];
+                    oneReport["temperature"] = response.temperature[index_];
+                    oneReport["temperatureFeelsLike"] = response.temperatureFeelsLike[index_];
+                    oneReport["validTimeLocal"] = response.validTimeLocal[index_];
+                    oneReport["windDirection"] = response.windDirection[index_];
+                    oneReport["windDirectionCardinal"] = response.windDirectionCardinal[index_];
+                    oneReport["windSpeed"] = response.windSpeed[index_];
+                    oneReport["wxPhraseLong"] = response.wxPhraseLong[index_];
+                    oneReport["wxPhraseShort"] = response.wxPhraseShort[index_];
+                    oneReport["wxSeverity"] = response.wxSeverity[index_];
+                    // var icon_uri = "svg"
+                    // var svgoptions = {
+                    //     "url": svguri,
+                    //     "method": "GET",
+                    //     "timeout" : 0
+                    // }
+                    // $.ajax(svgoptions).done(function(resvg){
+                    //     if (!response){
+                    //         return;
+                    //     }
+                    //     svg_response = resvg;
+                    // });
+                    // var _icon = {url:'https://nanick.org/weathericons/' + oneReport.iconCode + ".png"}
+                    var image = 'https://developers.google.com/maps/documentation/javascript/examples/full/images/beachflag.png';
+                    const markerIcon = {
+                        url: 'https://nanick.org/weathericons/_' + oneReport.iconCode + ".png",
+                        size: new google.maps.Size(43,43)
+                    };
+                    marker = new google.maps.Marker({
+                        position: { lat: path.lat(), lng: path.lng() },
+                        map,
+                        title: timestring + " " + oneReport.temperature.toString() + "°F and " + oneReport.wxPhraseLong,
+                        label: oneReport.temperature.toString() + "°F",
+                        icon: 'https://nanick.org/weathericons/_' + oneReport.iconCode + ".png"
+                    });
+                    // new google.maps.Marker({
+                    //     position: { lat: path.lat(), lng: path.lng() },
+                    //     map,
+                    //     title: oneReport.temperature.toString() + "°F and " + oneReport.wxPhraseLong,
+                    //     iocn: "https://www.wunderground.com/static/i/c/v4/" + oneReport.iconCode + ".svg"
+                    // });
+                });
+            }
+            function calculateDuration(step,path){
+                var thisDuration = step.duration.value
+                console.log(thisDuration);
+                var plat = path.lat();
+                var plng = path.lng();
+                var slat = step.start_point.lat();
+                var slng = step.start_point.lng();
+                var elat = step.end_point.lat();
+                var elng = step.end_point.lng();
+                if((slat - elat) >= 0){
+                    lat_direction = -1;
+                } else {
+                    lat_direction = 1;
+                }
+                if((slng - elng) >= 0){
+                    lng_direction = -1;
+                } else {
+                    lng_direction = 1;
+                }
+                plat = lat_direction * plat;
+                slat = lat_direction * slat;
+                elat = lat_direction * elat;
+                plng = lng_direction * plng;
+                slng = lng_direction * slng;
+                elng = lng_direction * elng;
+                var latdiff = elat - slat
+                var lngdiff = elng - slng;
+                var lat_progress = plat - slat;
+                var lng_progress = plng - slng;
+                var lat_percent = lat_progress / latdiff;
+                var lng_percent = lng_progress / lngdiff;
+                var avg_progress = (lng_progress + lat_progress) / 2
+                var realDuration = thisDuration * avg_progress * 1000;
+                return realDuration;
+            }
+            function whichStep(path){
+                var lat_direction,lng_direction;
+                for(var i = 0; i < steps.length; i++){
+                    var s = steps[i];
+                    var start_location = s.start_point;
+                    var end_location = s.end_point;
+                    var plat = path.lat();
+                    var plng = path.lng();
+                    var slat = start_location.lat();
+                    var slng = start_location.lng();
+                    var elat = end_location.lat();
+                    var elng = end_location.lng();
+                    if((slat - elat) >= 0){
+                        lat_direction = -1;
+                    } else {
+                        lat_direction = 1;
+                    }
+                    if((slng - elng) >= 0){
+                        lng_direction = -1;
+                    } else {
+                        lng_direction = 1;
+                    }
+                    plat = lat_direction * plat;
+                    slat = lat_direction * slat;
+                    elat = lat_direction * elat;
+                    plng = lng_direction * plng;
+                    slng = lng_direction * slng;
+                    elng = lng_direction * elng;
+                    if((plat > slat) & (plat < elat) & (plng > slng) & (plng < elng)){
+                        return i;
+                    }
+                }
+            }
+            function initMap() {
+                var request = {
+                    origin: { lat: src_coords_obj.lat, lng: src_coords_obj.lng },
+                    destination: { lat: dest_coords_obj.lat, lng: dest_coords_obj.lng },
+                    provideRouteAlternatives: false,
+                    travelMode: 'DRIVING',
+                    drivingOptions: {departureTime: new Date(), trafficModel: 'pessimistic'},
+                    unitSystem: google.maps.UnitSystem.IMPERIAL
+                };
+                var lat_half = (src_coords_obj.lat - dest_coords_obj.lat) / 2
+                var lng_half = (src_coords_obj.lng - dest_coords_obj.lng) / 2
+                map_coords = {lat: (src_coords_obj.lat + lat_half), lng: (src_coords_obj.lng + lng_half)};
+                map = new google.maps.Map(document.getElementById("map"), {
+                    center: { lat: map_coords.lat, lng: map_coords.lng },
+                    zoom: 9
+                });
+                var directionsService = new google.maps.DirectionsService();
+                var directionsRenderer = new google.maps.DirectionsRenderer();
+                directionsRenderer.setMap(map);
+                directionsService.route(request, function(result, status) {
+                    directionsResponse = result;
+                    if (status == 'OK') {
+                        document.getElementById("directions").style.display = "none";
+                        document.getElementById("map").style.display = "block";
+                        directionsRenderer.setDirections(result);
+                        start_time = new Date().getTime();
+                        var start = result.routes[0].legs[0].start_location;
+                        var end = result.routes[0].legs[0].end_location;
+                        steps = result.routes[0].legs[0].steps;
+                        duration = result.routes[0].legs[0].duration.value;
+                        qty_weather_reports = Math.floor(duration / 900);
+                        iter = Math.floor(result.routes[0].overview_path.length / qty_weather_reports);
+                        for(var i = 1; i < result.routes[0].overview_path.length; i+=iter){
+                            var p = result.routes[0].overview_path[i];
+                            var sub_iter = 0;
+                            while(typeof(whichStep(p)) == "undefined" && (i + sub_iter) < result.routes[0].overview_path.length){
+                                sub_iter++
+                                p = result.routes[0].overview_path[(i + sub_iter)];
+                            }
+                            var step_index = whichStep(p);
+                            console.log(JSON.stringify({i: i, step_index: step_index}));
+                            var durs = [];
+                            for(var a = 0; a < step_index; a++){
+                                durs.push(steps[a].duration.value)
+                            }
+                            var current_duration = parseInt(durs.reduce(function(a, b) { return a + b; }, 0)) * 1000;
+                            var duration_progress = calculateDuration(steps[step_index],p);
+                            var real_duration = current_duration + duration_progress;
+                            var timestamp = start_time + real_duration;
+                            console.log(JSON.stringify({current_duration: current_duration,duration_progress: duration_progress, real_duration: real_duration, timestamp: timestamp}));
+                            getWeatherReport(p,timestamp);
+                        }
+                    }
+                });
+
+            }
+        </script>
+    </head>
+    <body>
+        <div id="directions">
+            <div style="height: 200px;"></div>
+            <div id="container">
+                <table id="formtable">
+                    <tr>
+                        <td><lablel for="start">Start: </lablel></td>
+                        <td><input type="text" id="start" name="start"></td>
+                    </tr>
+                    <tr>
+                        <td><lablel for="end">End: </lablel></td>
+                        <td><input type="text" id="end" name="end"></td>
+                    </tr>
+                </table>
+                <button style="line-height: 24px;" id="go" onclick="initMap()"><span style="margin: 0px; padding: 0px;">GO </span><span style="font-size: 36px; margin: 0px; padding: 0px;">→</span></button>
+            </div>
+        </div>
+        <div id="map"></div>
+        <!-- <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCZpstuo1hvbPo6FKFTUr1r0dZbec8vW-g&callback=initMap&v=weekly" async="async"></script> -->
+        <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCZpstuo1hvbPo6FKFTUr1r0dZbec8vW-g&v=weekly" async="async"></script>
+    </body>
+</html>
