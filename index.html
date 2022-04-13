@@ -313,7 +313,7 @@
                     if (!response){
                         return;
                     }
-                    var hours,minutes;
+                    var hours,minutes,timestring;
                     var pm = false;
                     weatherResponse = response;
                     var closest = response.validTimeLocal.filter(function(a){
@@ -323,14 +323,17 @@
                         hours = new Date(timestamp).getHours() - 12;
                         pm = true;
                     } else {
-                        hours = new Date(timestamp).getHours();
+                        if(new Date(timestamp).getHours() == 0){
+                            hours = 12
+                        } else {
+                            hours = new Date(timestamp).getHours();
+                        }
                     }
-                    minutes = new Date(timestamp).getMinutes();
-                    if(minutes.toString().length == 1){ minutes = "0" + minutes.toString() }
+                    minutes = new Date(timestamp).getMinutes().toString().padStart(2,'0');
                     if(pm){
-                        var timestring = hours + ":" + minutes + " PM";
+                        timestring = hours + ":" + minutes + " PM";
                     } else {
-                        var timestring = hours + ":" + minutes + " AM";
+                        timestring = hours + ":" + minutes + " AM";
                     }
                     var index_ = response.validTimeLocal.indexOf(closest);
                     var oneReport = {};
@@ -351,34 +354,18 @@
                     oneReport["wxPhraseLong"] = response.wxPhraseLong[index_];
                     oneReport["wxPhraseShort"] = response.wxPhraseShort[index_];
                     oneReport["wxSeverity"] = response.wxSeverity[index_];
-                    // var icon_uri = "svg"
-                    // var svgoptions = {
-                    //     "url": svguri,
-                    //     "method": "GET",
-                    //     "timeout" : 0
-                    // }
-                    // $.ajax(svgoptions).done(function(resvg){
-                    //     if (!response){
-                    //         return;
-                    //     }
-                    //     svg_response = resvg;
-                    // });
-                    // var _icon = {url:'https://nanick.org/weathericons/' + oneReport.iconCode + ".png"}
                     var info_table = "<table class=\"hourlytable\">\n    <tbody>\n        <tr>\n            <th class=\"hourly\" style=\"color: chartreuse;\">" + timestring + "</th>\n        </tr>\n        <tr>\n            <th class=\"hourly\">\n                <img height=\"100\" width=\"100\" src=\"https://www.wunderground.com/static/i/c/v4/" + oneReport.iconCode + ".svg\">\n            </th>\n        </tr>\n        <tr>\n            <td class=\"hourly\">" + oneReport.temperature + "&deg;F</td>\n        </tr>\n        <tr>\n            <td class=\"hourly\">" + oneReport.precipChance + "% chance of rain</td>\n        </tr>\n        <tr>\n            <td class=\"hourly\">" + oneReport.windSpeed + " mph " + oneReport.windDirectionCardinal + "</td>\n        </tr>\n        <tr>\n            <td class=\"hourly\">" + oneReport.pressureMeanSeaLevel + " inches Hg</td>\n        </tr>\n    </tbody>\n</table>";
                     const image = {
                         url: 'https://raw.githubusercontent.com/nstevens1040/tripweather/main/icons/_' + oneReport.iconCode + ".png",
-                        // This marker is 20 pixels wide by 32 pixels high.
-                        size: new google.maps.Size(75, 75),
-                        // The origin for this image is (0, 0).
+                        size: new google.maps.Size(75,75),
                         origin: new google.maps.Point(0,0),
-                        // The anchor for this image is the base of the flagpole at (0, 32).
-                        anchor: new google.maps.Point(0, 0)
+                        anchor: new google.maps.Point(0,0)
                     };
                     var marker_ = new google.maps.Marker({
                         position: { lat: path.lat(), lng: path.lng() },
                         map,
                         title: timestring + " " + oneReport.temperature.toString() + "°F and " + oneReport.wxPhraseLong,
-                        label: oneReport.temperature.toString() + "°F",
+                        label: oneReport.temperature.toString() + "°F\n" + timestring,
                         icon: image
                     });
                     const infowindow = new google.maps.InfoWindow({content: info_table,});
