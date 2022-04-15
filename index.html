@@ -205,6 +205,8 @@
             function init_callback(response) {
                 geo_re = response;
                 if (response.results[0]) {
+                    //0.00755767977475585
+                    if(response.results[0].address_components.filter((a)=>{return (a.types.indexOf("postal_code") != -1);}).length > 0){
                     setTimeout(()=>{
                         var adr = response.results[0].address_components;
                         var s, street_number, ro, street_name;
@@ -214,7 +216,8 @@
                         var state = adr.filter((a)=>{
                             return (a.types.indexOf("administrative_area_level_1") != -1);
                         })[0].short_name;
-                        var zip_code = adr.filter((a)=>{
+                        var zip_code;
+                        = adr.filter((a)=>{
                             return (a.types.indexOf("postal_code") != -1);
                         })[0].short_name;
                         sn = adr.filter((a)=>{
