@@ -277,9 +277,13 @@
                   }
                   if (mode === "ORIG") {
                     this.originPlaceId = place.geometry.location;
+                    src_coords_obj.lat = this.originPlaceId.lat();
+                    src_coords_obj.lng = this.originPlaceId.lng();
                     // src_address();
                   } else {
                     this.destinationPlaceId = place.geometry.location;
+                    dest_coords_obj.lat = this.destinationPlaceId.lat();
+                    dest_coords_obj.lng = this.destinationPlaceId.lng();
                     // dest_address();
                   }
             
@@ -356,11 +360,18 @@
             //   }
             // ];
             document.addEventListener("DOMContentLoaded", ()=>{
-                document.getElementById("end").addEventListener("keyup", keyup_address);
-                document.getElementById("end").addEventListener("blur", blur_end_address);
-                document.getElementById("start").addEventListener("keyup",keyup_address);
-                document.getElementById("start").addEventListener("blur", blur_start_address);
-                navigator.geolocation.getCurrentPosition(nav_callback);
+                document.getElementById("end").addEventListener("keyup",strike_enter);
+                // document.getElementById("end").addEventListener("blur", blur_end_address);
+                document.getElementById("start").addEventListener("keyup",strike_enter);
+                // document.getElementById("start").addEventListener("blur", blur_start_address);
+                map = new google.maps.Map(document.getElementById("map"), {
+                    mapTypeControlOptions: {
+                        mapTypeIds: [google.maps.MapTypeId.ROADMAP, google.maps.MapTypeId.TERRAIN]
+                    },
+                    zoom: 9,
+                    mapTypeId: google.maps.MapTypeId.ROADMAP
+                });
+                handler = new AutocompleteDirectionsHandler(map);
             });
             function nav_callback(p) {
                 coords_obj.lat = p.coords.latitude + 0.00755767977475585;
@@ -410,15 +421,20 @@
                         document.getElementById("start").value= loc_address;
                         src_coords_obj.lat = response.results[0].geometry.location.lat();
                         src_coords_obj.lng = response.results[0].geometry.location.lng();
-                        map = new google.maps.Map(document.getElementById("map"), {
-                            mapTypeControlOptions: {
-                                mapTypeIds: [google.maps.MapTypeId.ROADMAP, google.maps.MapTypeId.TERRAIN]
-                            },
-                            center: { lat: src_coords_obj.lat, lng: src_coords_obj.lng },
-                            zoom: 9,
-                            mapTypeId: google.maps.MapTypeId.ROADMAP
-                        });
-                        handler = new AutocompleteDirectionsHandler(map);
+                        handler.originPlaceId = response.results[0].geometry.location;
+                        if(map){
+                            map.center = { lat: src_coords_obj.lat, lng: src_coords_obj.lng }
+                        } else {
+                            map = new google.maps.Map(document.getElementById("map"), {
+                                mapTypeControlOptions: {
+                                    mapTypeIds: [google.maps.MapTypeId.ROADMAP, google.maps.MapTypeId.TERRAIN]
+                                },
+                                center: { lat: src_coords_obj.lat, lng: src_coords_obj.lng },
+                                zoom: 9,
+                                mapTypeId: google.maps.MapTypeId.ROADMAP
+                            });
+                            handler = new AutocompleteDirectionsHandler(map);
+                        }
                         console.log(JSON.stringify({
                             geocoding: loc_address
                         }));
@@ -465,10 +481,24 @@
                             document.getElementById("start").value= loc_address;
                             src_coords_obj.lat = response.results[0].geometry.location.lat();
                             src_coords_obj.lng = response.results[0].geometry.location.lng();
+                            handler.originPlaceId = response.results[0].geometry.location;
                             console.log(JSON.stringify({
                                 geocoding: loc_address
                             }));
                             console.log(JSON.stringify(src_coords_obj));
+                            if(!handler.destinationPlaceId){
+                                var dest_ = document.getElementById("end").value;
+                                if(dest_ != ""){
+                                    var geocoder = new google.maps.Geocoder();
+                                    geocoder.geocode({
+                                        address: dest_
+                                    }).then(end_callback);
+                                }
+                            } else {
+                                if(handler.originPlaceId & handler.destinationPlaceId){
+                                    handler.route();
+                                }
+                            }
                         }, 250);
                     }
                 }
@@ -511,49 +541,70 @@
                         document.getElementById("end").value= loc_address;
                         dest_coords_obj.lat = response.results[0].geometry.location.lat();
                         dest_coords_obj.lng = response.results[0].geometry.location.lng();
+                        handler.destinationPlaceId = response.results[0].geometry.location;
                         console.log(JSON.stringify({
                             geocoding: loc_address
                         }));
                         console.log(JSON.stringify(dest_coords_obj));
+                        if(handler.originPlaceId & handler.destinationPlaceId){
+                            handler.route();
+                        }
                     }, 250);
                 }
             }
-            function blur_end_address(){
-                var maddress = event.srcElement.value;
-                var geocoder = new google.maps.Geocoder();
-                geocoder.geocode({
-                    address: maddress
-                }).then(end_callback);
-            }
-            function blur_start_address(){
-                var maddress = event.srcElement.value;
-                var geocoder = new google.maps.Geocoder();
-                geocoder.geocode({
-                    address: maddress
-                }).then(start_callback);
-            }
-            function keyup_address(event) {
-                if(event.keyCode == 13 || event.keyCode == 9){
-                    if(!handler.originPlaceId || !handler.destinationPlaceId){
-                        return;
-                    }
-                    var maddress = event.srcElement.value;
-                    var geocoder = new google.maps.Geocoder();
-                    geocoder.geocode({
-                        address: maddress
-                    }).then(end_callback);
-                }
-            }
-            function keyup_dest(event) {
+            // function blur_end_address(){
+            //     var maddress = event.srcElement.value;
+            //     var geocoder = new google.maps.Geocoder();
+            //     geocoder.geocode({
+            //         address: maddress
+            //     }).then(end_callback);
+            // }
+            // var blurevent;
+            // function blur_start_address(event){
+            //     blurevent = event;
+            //     var maddress = event.srcElement.value;
+            //     var geocoder = new google.maps.Geocoder();
+            //     geocoder.geocode({
+            //         address: maddress
+            //     }).then(start_callback);
+            // }
+            // function keyup_address(event) {
+            //     if(event.keyCode == 13 || event.keyCode == 9){
+            //         if(!handler.originPlaceId || !handler.destinationPlaceId){
+            //             return;
+            //         }
+            //         var maddress = event.srcElement.value;
+            //         var geocoder = new google.maps.Geocoder();
+            //         geocoder.geocode({
+            //             address: maddress
+            //         }).then(end_callback);
+            //     }
+            // }
+            // function keyup_dest(event) {
+            //     if(event.keyCode == 13){
+            //         if(!handler.originPlaceId || !handler.destinationPlaceId){
+            //             return;
+            //         }
+            //         var maddress = document.getElementById("start").value;
+            //         var geocoder = new google.maps.Geocoder();
+            //         geocoder.geocode({
+            //             address: maddress
+            //         }).then(start_callback);
+            //     }
+            // }
+            var enter_;
+            function strike_enter(event){
+                enter_ = event;
                 if(event.keyCode == 13){
-                    if(!handler.originPlaceId || !handler.destinationPlaceId){
-                        return;
-                    }
-                    var maddress = document.getElementById("start").value;
+                    var start = document.getElementById("start").value;
+                    var end = document.getElementById("end").value;
                     var geocoder = new google.maps.Geocoder();
-                    geocoder.geocode({
-                        address: maddress
-                    }).then(start_callback);
+                    if(start != ""){
+                        geocoder.geocode({
+                            address: start
+                        }).then(start_callback);
+                    }
+
                 }
             }
             var directionsResponse,weatherResponse,duration,qty_weather_reports,iter,triptime,steps,start_time,end_time;
@@ -637,10 +688,12 @@
                 marker_div.classList.add("weatherMarker");
                 return marker_div;
             }
-            function getWeatherReport(path,timestamp,arrival_offset_report=false,one77=0){
+            function getWeatherReport(path,timestamp,arrival_offset_report=false){
                 var coords = path.lat() + "%2C" + path.lng();
                 var settings;
-                if(hourly_only){
+                var hourly = false;
+                if((timestamp - new Date().getTime()) > 25200000){
+                    hourly = true;
                     settings = {
                         "url": "https://api.weather.com/v3/wx/forecast/hourly/15day?geocode=" + coords + "&format=json&units=e&language=en-US&apiKey=e1f10a1e78da46f5b10a1e78da96f525",
                         "method": "GET",
@@ -834,6 +887,9 @@
                 const utcEpoch = Math.round(utcMs/ 1000);
                 return utcEpoch;
             }
+            function getDirections(){
+                handler.route();
+            }
             function routeCallback(result, status) {
                 directionsResponse = result;
                 if (status == 'OK') {
@@ -847,7 +903,7 @@
                     end_time = start_time + (directionsResponse.routes[0].legs[0].duration.value * 1000)
                     var start = result.routes[0].legs[0].start_location;
                     var end = result.routes[0].legs[0].end_location;
-                    if((start_time - new Date().getTime()) > 25200000){
+                    if((end_time - new Date().getTime()) > 25200000){
                         hourly_only = true;
                         if((3600000 - new Date(start_time).getMinutes()*60*1000) < 3600000){
                             forecast_start = new Date((start_time + ((3600000 - new Date(start_time).getMinutes()*60*1000))));
@@ -899,10 +955,10 @@
                     } else {
                         if(hourly_only){
                             var forecast_duration = forecast_end.getTime() - forecast_start.getTime();
-                            amt_reports = forecast_duration / 3600000;
+                            amt_reports = Math.ceil(forecast_duration / 3600000);
                         } else {
                             var forecast_duration = forecast_end.getTime() - forecast_start.getTime();
-                            amt_reports = forecast_duration / 900000;
+                            amt_reports = Math.ceil(forecast_duration / 900000);
                         }
                     }
                     iter = Math.floor(result.routes[0].overview_path.length / amt_reports);
@@ -946,9 +1002,9 @@
                     var path_index = Math.round(steps[index_step].path.length * progress_percent);
                     current_path = steps[index_step].path[path_index];
                     var p = steps[index_step].path[path_index];
-                    var one77 = 0;
-                    getWeatherReport(p,timestamp,false,one77);
-                    one77 = 1;
+                    // var one77 = 0;
+                    getWeatherReport(p,timestamp,false);
+                    // one77 = 1;
                     console.log(JSON.stringify({amt_reports: amt_reports}));
                     var p_objs = [];
                     if(amt_reports >= 1){
@@ -959,7 +1015,7 @@
                             } else {
                                 timestamp = forecast_start.getTime() + (i * 900000);
                             }
-                            console.log(timestamp);
+                            console.log(new Date(timestamp));
                             var progress_seconds = (timestamp - start_time) / 1000;
                             var index_step = 0;
                             var step_end = steps[index_step].duration.value;
@@ -978,15 +1034,15 @@
                             var path_index = Math.round(steps[index_step].path.length * progress_percent);
                             current_path = steps[index_step].path[path_index];
                             var p = steps[index_step].path[path_index];
-                            getWeatherReport(p,timestamp,false,one77);
-                            switch(one77){
-                                case 0:
-                                    one77 = 1;
-                                    break;
-                                case 1:
-                                    one77 = 0;
-                                    break;
-                            }
+                            getWeatherReport(p,timestamp,false);
+                            // switch(one77){
+                            //     case 0:
+                            //         one77 = 1;
+                            //         break;
+                            //     case 1:
+                            //         one77 = 0;
+                            //         break;
+                            // }
                         }
                         // var odd_obj = [];
                         // for(var i = 0; i < p_objs.length; i++){
@@ -1024,12 +1080,13 @@
                     if(hourly_only){
                         var p = steps[steps.length - 1].path[steps[steps.length - 1].path.length - 1];
                         var timestamp = end_time + (3600000 - ((new Date(end_time).getMinutes() * 60 * 1000) + (new Date(end_time).getSeconds() * 1000) + (new Date(end_time).getMilliseconds())))
-                        getWeatherReport(p,timestamp,true,one77);
+                        getWeatherReport(p,timestamp,true);
                     }
                 }
             }
             function initMap(){
-                handler.route();
+                navigator.geolocation.getCurrentPosition(nav_callback);
+                // handler.route();
             }
             // function initMap() {
             //     // var request;
@@ -1300,7 +1357,7 @@
                     <tr>
                         <td class="label"><label for="start">Start: </label></td>
                         <td><input type="text" id="start" name="start"></td>
-                        <td><button id="loc">Use my location</button></td>
+                        <td><button id="loc" onclick="initMap();">Use my location</button></td>
                     </tr>
                     <tr>
                         <td class="label"><label for="end">End: </label></td>
@@ -1313,7 +1370,7 @@
                         <td></td>
                     </tr>
                 </table>
-                <button style="line-height: 24px;" id="go" onclick="initMap()"><span style="margin: 0px; padding: 0px;">GO </span><span style="font-size: 36px; margin: 0px; padding: 0px;">→</span></button>
+                <button style="line-height: 24px;" id="go" onclick="getDirections()"><span style="margin: 0px; padding: 0px;">GO </span><span style="font-size: 36px; margin: 0px; padding: 0px;">→</span></button>
             </div>
         </div>
         <div id="map"></div>
